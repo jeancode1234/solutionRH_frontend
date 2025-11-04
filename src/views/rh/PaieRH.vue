@@ -1,404 +1,255 @@
 <template>
-  <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md min-h-screen">
-    <!-- ✅ Header -->
-    <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
-      <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-        Gestion de la Paie
-      </h2>
-      <button
-        @click="toggleForm"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-      >
-        {{ showForm ? "Fermer le formulaire" : "➕ Nouveau bulletin" }}
-      </button>
-    </div>
-
-    <!-- ✅ Formulaire -->
-    <div
-      v-if="showForm"
-      class="p-4 border rounded bg-gray-50 dark:bg-gray-900 mb-6"
-    >
-      <h3 class="text-lg font-medium mb-3 text-gray-700 dark:text-gray-200">
-        Créer un bulletin
-      </h3>
-
-      <div class="grid md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Employé</label
-          >
-          <select
-            v-model="form.employee"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          >
-            <option disabled value="">Sélectionner...</option>
-            <option v-for="emp in employees" :key="emp.id" :value="emp.name">
-              {{ emp.name }}
-            </option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Mois</label
-          >
-          <input
-            v-model="form.month"
-            type="month"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-
-        <div>
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Salaire de base (FCFA)</label
-          >
-          <input
-            v-model.number="form.base"
-            type="number"
-            min="0"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-
-        <div>
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Primes (FCFA)</label
-          >
-          <input
-            v-model.number="form.bonus"
-            type="number"
-            min="0"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-
-        <div>
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Retenues (FCFA)</label
-          >
-          <input
-            v-model.number="form.deductions"
-            type="number"
-            min="0"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          />
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-gray-600 dark:text-gray-300 mb-1"
-            >Commentaire RH</label
-          >
-          <textarea
-            v-model="form.comment"
-            rows="2"
-            class="w-full p-2 border rounded dark:bg-gray-800 dark:text-gray-100"
-          ></textarea>
-        </div>
+  <div class="bg-white dark:bg-gray-900 p-4 md:p-6 rounded-xl shadow min-h-screen transition">
+    <!-- 🧭 En-tête -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">💰 Gestion des fiches de paie</h2>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">
+          Création, validation et suivi des fiches de paie des employés
+        </p>
       </div>
 
-      <div class="mt-4 flex justify-end gap-3 flex-wrap">
-        <button
-          @click="generatePreview"
-          class="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-800"
-        >
-          Aperçu
+      <div class="flex flex-wrap gap-2">
+        <button @click="openForm" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+          ➕ Nouvelle fiche
         </button>
-        <button
-          @click="addBulletin"
-          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Enregistrer
+        <button @click="openSettings" class="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded">
+          ⚙️ Paramètres
         </button>
       </div>
     </div>
 
-    <!-- ✅ Aperçu -->
-    <div
-      v-if="preview"
-      class="p-4 mb-6 border rounded bg-gray-100 dark:bg-gray-900"
-    >
-      <h3 class="font-semibold text-gray-800 dark:text-gray-100 mb-2">
-        Aperçu du bulletin – {{ form.employee }}
-      </h3>
-      <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-        <p><strong>Mois :</strong> {{ form.month }}</p>
-        <p>
-          <strong>Salaire de base :</strong>
-          {{ form.base.toLocaleString() }} FCFA
-        </p>
-        <p><strong>Primes :</strong> {{ form.bonus.toLocaleString() }} FCFA</p>
-        <p>
-          <strong>Retenues :</strong>
-          {{ form.deductions.toLocaleString() }} FCFA
-        </p>
-        <p class="mt-2 font-semibold">
-          Net à payer :
-          {{ (form.base + form.bonus - form.deductions).toLocaleString() }} FCFA
-        </p>
-        <p
-          v-if="form.comment"
-          class="mt-2 italic text-gray-500 dark:text-gray-400"
-        >
-          💬 {{ form.comment }}
-        </p>
+    <!-- 🔍 Filtres -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap gap-2 items-center">
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Rechercher un employé..."
+          class="p-2 border rounded dark:bg-gray-800 dark:text-white"
+        />
+        <select v-model="filterDept" class="p-2 border rounded dark:bg-gray-800 dark:text-white">
+          <option value="">Tous départements</option>
+          <option v-for="d in departements" :key="d">{{ d }}</option>
+        </select>
+        <select v-model="filterStatus" class="p-2 border rounded dark:bg-gray-800 dark:text-white">
+          <option value="">Tous statuts</option>
+          <option>En attente</option>
+          <option>Validée</option>
+          <option>Payée</option>
+        </select>
       </div>
-      <div class="mt-4 flex gap-3 flex-wrap">
-        <button
-          @click="downloadProfessionalPDF(form)"
-          class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Télécharger PDF
-        </button>
-        <button
-          @click="sendBulletin"
-          class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-        >
-          Envoyer à l’employé
-        </button>
+
+      <div class="flex items-center gap-2">
+        <label class="text-gray-600 dark:text-gray-300 text-sm">Par page :</label>
+        <select v-model.number="itemsPerPage" class="p-2 border rounded dark:bg-gray-800 dark:text-white">
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="20">20</option>
+        </select>
       </div>
     </div>
 
-    <!-- ✅ Historique -->
-    <div>
-      <h3 class="text-lg font-medium mb-3 text-gray-700 dark:text-gray-200">
-        Historique des bulletins
-      </h3>
+    <!-- 📤 Actions Import/Export -->
+    <div class="flex flex-wrap justify-end gap-2 mb-4">
+      <label class="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded cursor-pointer text-sm">
+        📥 Importer
+        <input type="file" class="hidden" @change="handleImport" accept=".xlsx,.json" />
+      </label>
+      <button @click="exportAsPDF" class="px-3 py-1 bg-red-500 text-white rounded text-sm">PDF</button>
+      <button @click="exportAsWord" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">Word</button>
+      <button @click="exportAsExcel" class="px-3 py-1 bg-green-500 text-white rounded text-sm">Excel</button>
+    </div>
 
-      <div v-if="bulletins.length" class="overflow-x-auto">
-        <table
-          class="min-w-full text-xs sm:text-sm border dark:border-gray-700"
-        >
-          <thead
-            class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+    <!-- 🧾 Tableau principal -->
+    <div class="overflow-x-auto rounded-lg border dark:border-gray-700">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100 dark:bg-gray-800">
+          <tr class="text-left text-gray-700 dark:text-gray-200">
+            <th class="p-3">#</th>
+            <th class="p-3">Employé</th>
+            <th class="p-3">Poste</th>
+            <th class="p-3">Département</th>
+            <th class="p-3">Période</th>
+            <th class="p-3">Salaire Net (FCFA)</th>
+            <th class="p-3">Statut</th>
+            <th class="p-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="(f, idx) in paginated"
+            :key="f.id"
+            class="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
           >
-            <tr>
-              <th class="p-3 text-left">Employé</th>
-              <th class="p-3 text-left">Mois</th>
-              <th class="p-3 text-center">Net à payer</th>
-              <th class="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="(b, i) in bulletins"
-              :key="i"
-              class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <td class="p-3">{{ b.employee }}</td>
-              <td class="p-3">{{ b.month }}</td>
-              <td class="p-3 text-center">{{ b.net.toLocaleString() }} FCFA</td>
-              <td class="p-3 text-center">
-                <button
-                  @click="downloadOfficialPDF(form)"
-                  class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-                >
-                  Télécharger PDF
-                </button>
-
-                <button
-                  @click="sendExisting(b)"
-                  class="text-green-600 hover:underline"
-                >
-                  Envoyer
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p v-else class="text-gray-500 dark:text-gray-400 text-sm italic mt-4">
-        Aucun bulletin enregistré pour le moment.
-      </p>
+            <td class="p-3">{{ startIndex + idx + 1 }}</td>
+            <td class="p-3">{{ f.nom }}</td>
+            <td class="p-3">{{ f.poste }}</td>
+            <td class="p-3">{{ f.departement }}</td>
+            <td class="p-3">{{ f.periode }}</td>
+            <td class="p-3">{{ f.salaireNet.toLocaleString() }}</td>
+            <td class="p-3">
+              <span
+                :class="[
+                  'px-2 py-1 rounded text-xs',
+                  f.statut === 'En attente' ? 'bg-yellow-100 text-yellow-700' :
+                  f.statut === 'Validée' ? 'bg-blue-100 text-blue-700' :
+                  'bg-green-100 text-green-700'
+                ]"
+              >
+                {{ f.statut }}
+              </span>
+            </td>
+            <td class="p-3 text-center space-x-2">
+              <button @click="openForm(f)" class="text-indigo-600 hover:underline">Modifier</button>
+              <button @click="deleteFiche(f.id)" class="text-red-600 hover:underline">Supprimer</button>
+            </td>
+          </tr>
+          <tr v-if="!filtered.length">
+            <td colspan="8" class="text-center py-4 text-gray-500 dark:text-gray-400">Aucune fiche trouvée</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+
+    <!-- 📄 Pagination -->
+    <div class="flex items-center justify-between text-sm mt-4">
+      <span class="text-gray-600 dark:text-gray-300">
+        Affichage {{ startIndex + 1 }} - {{ Math.min(startIndex + paginated.length, filtered.length) }} sur
+        {{ filtered.length }}
+      </span>
+
+      <div class="flex gap-2">
+        <button
+          @click="prevPage"
+          :disabled="currentPage === 1"
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+        >
+          Précédent
+        </button>
+        <button
+          @click="nextPage"
+          :disabled="currentPage === totalPages"
+          class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+        >
+          Suivant
+        </button>
+      </div>
+    </div>
+
+    <!-- 📊 Section Statistiques -->
+    <div class="mt-10">
+      <PaieStats />
+    </div>
+
+    <!-- 🪟 Modales -->
+    <PaieFormModal v-if="showForm" :fiche="selectedFiche" @click="closeForm" />
+    <PaieSettingsModal v-if="showSettings" @click="showSettings = false" />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import { toast } from "vue3-toastify";
-import "vue3-toastify/dist/index.css";
+import { ref, computed } from 'vue'
+import { useStore } from 'vuex'
+import { toast } from 'vue3-toastify'
+import PaieFormModal from '@/components/rh/PaieFormModal.vue'
+import PaieSettingsModal from '@/components/rh/PaieSettingsModal.vue'
+import PaieStats from '@/components/rh/PaieStats.vue'
+import { exportPaiesToPDF, exportPaiesToWord, exportPaiesToExcel } from '@/utils/exportUtils'
+import { importPaiesFromExcel, importPaiesFromJSON } from '@/utils/importUtils'
 
-const showForm = ref(false);
-const preview = ref(false);
+const store = useStore()
 
-const employees = ref([
-  { id: 1, name: "Alice Dupont" },
-  { id: 2, name: "Jean Mbarga" },
-  { id: 3, name: "Fatou Ndiaye" },
-]);
 
-const bulletins = ref([]);
+// Filtres
+const search = ref('')
+const filterDept = ref('')
+const filterStatus = ref('')
+const itemsPerPage = ref(10)
+const currentPage = ref(1)
 
-const form = ref({
-  employee: "",
-  month: "",
-  base: 0,
-  bonuses: [
-    { label: "Prime de rendement", amount: 0 },
-    { label: "Prime de transport", amount: 0 },
-  ],
-  deductions: [
-    { label: "CNPS", amount: 0 },
-    { label: "Retard", amount: 0 },
-  ],
-  comment: "",
-});
+const showForm = ref(false)
+const showSettings = ref(false)
+const selectedFiche = ref(null)
 
-function toggleForm() {
-  showForm.value = !showForm.value;
+const departements = computed(() => [...new Set(store.state.paie.fiches.map((f) => f.departement))])
+
+// Données filtrées
+const filtered = computed(() => {
+  const q = search.value.toLowerCase()
+  return store.state.paie.fiches.filter((f) => {
+    if (filterDept.value && f.departement !== filterDept.value) return false
+    if (filterStatus.value && f.statut !== filterStatus.value) return false
+    return (
+      f.nom.toLowerCase().includes(q) ||
+      f.poste.toLowerCase().includes(q) ||
+      f.departement.toLowerCase().includes(q)
+    )
+  })
+})
+
+// Pagination
+const totalPages = computed(() => Math.ceil(filtered.value.length / itemsPerPage.value))
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value)
+const paginated = computed(() => filtered.value.slice(startIndex.value, startIndex.value + itemsPerPage.value))
+function nextPage() {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+function prevPage() {
+  if (currentPage.value > 1) currentPage.value--
 }
 
-function generatePreview() {
-  if (!form.value.employee || !form.value.month) {
-    toast.error("Veuillez remplir tous les champs requis.");
-    return;
+// Actions
+function openForm(fiche) {
+  selectedFiche.value = fiche
+  showForm.value = true
+}
+function closeForm() {
+  showForm.value = false
+  selectedFiche.value = null
+}
+function openSettings() {
+  showSettings.value = true
+}
+function deleteFiche(id) {
+  if (confirm('Supprimer cette fiche de paie ?')) {
+    store.commit('paie/deleteFiche', id)
+    toast.success('Fiche supprimée avec succès')
   }
-  preview.value = true;
 }
 
-function addBulletin() {
-  if (!form.value.employee)
-    return toast.error("Veuillez sélectionner un employé.");
-  const totalBonus = form.value.bonuses.reduce((a, b) => a + b.amount, 0);
-  const totalDeduction = form.value.deductions.reduce(
-    (a, b) => a + b.amount,
-    0
-  );
-  const net = form.value.base + totalBonus - totalDeduction;
-  bulletins.value.push({ ...form.value, totalBonus, totalDeduction, net });
-  toast.success("Bulletin enregistré avec succès ✅");
-  showForm.value = false;
-  preview.value = false;
-}
+// Import / Export
+async function handleImport(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  let imported = []
 
-// ✅ Version officielle structurée et esthétique
-function downloadOfficialPDF(bulletin) {
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  if (file.name.endsWith('.xlsx')) imported = await importPaiesFromExcel(file)
+  else if (file.name.endsWith('.json')) imported = await importPaiesFromJSON(file)
 
-  const logoUrl =
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwM3QGmms-s5_9tMcmABl1CYm6HFawaqZVEbjCgKee0q76yCX-yUpLlFkQSNPCBYCBFHc&usqp=CAU";
-
-  // --- En-tête ---
-  doc.addImage(logoUrl, "PNG", 15, 10, 25, 25);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.text("ENTREPRISE XYZ SARL", 105, 20, { align: "center" });
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(
-    "Adresse : Yaoundé, Cameroun | Tél : +237 699 999 999 | Email : contact@xyz.com",
-    105,
-    26,
-    { align: "center" }
-  );
-
-  doc.setDrawColor(41, 128, 185);
-  doc.setLineWidth(0.5);
-  doc.line(15, 32, 195, 32);
-
-  // --- Titre principal ---
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("BULLETIN DE PAIE OFFICIEL", 105, 42, { align: "center" });
-
-  // --- Bloc employé à gauche ---
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  const startY = 55;
-  doc.text(`👤 Employé : ${bulletin.employee}`, 15, startY);
-  doc.text(`📅 Mois : ${bulletin.month}`, 15, startY + 6);
-
-  // --- Calculs ---
-  const totalBonus = bulletin.bonuses.reduce((a, b) => a + b.amount, 0);
-  const totalDeduction = bulletin.deductions.reduce((a, b) => a + b.amount, 0);
-  const net = bulletin.base + totalBonus - totalDeduction;
-
-  // --- Encadré principal ---
-  doc.setDrawColor(180);
-  doc.rect(14, 65, 182, 180);
-
-  // --- Tableau détaillé ---
-  autoTable(doc, {
-    startY: 75,
-    margin: { left: 20, right: 20 },
-    head: [["Description", "Montant (FCFA)", "Type"]],
-    body: [
-      ["Salaire de base", bulletin.base.toLocaleString(), "Fixe"],
-      ...bulletin.bonuses.map((b) => [
-        b.label,
-        b.amount.toLocaleString(),
-        "Prime",
-      ]),
-      ...bulletin.deductions.map((d) => [
-        d.label,
-        d.amount.toLocaleString(),
-        "Retenue",
-      ]),
-    ],
-    styles: { fontSize: 11, cellPadding: 3 },
-    headStyles: { fillColor: [41, 128, 185], textColor: 255, halign: "center" },
-    bodyStyles: { halign: "center" },
-    theme: "grid",
-  });
-
-  // --- Totaux ---
-  const finalY = doc.lastAutoTable.finalY + 10;
-  doc.setFont("helvetica", "bold");
-  doc.text(`Total Primes : ${totalBonus.toLocaleString()} FCFA`, 25, finalY);
-  doc.text(
-    `Total Retenues : ${totalDeduction.toLocaleString()} FCFA`,
-    25,
-    finalY + 6
-  );
-  doc.text(`Net à payer : ${net.toLocaleString()} FCFA`, 25, finalY + 12);
-
-  // --- Commentaire RH ---
-  if (bulletin.comment) {
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(10.5);
-    doc.text(`💬 Commentaire RH : ${bulletin.comment}`, 25, finalY + 22);
+  if (imported.length) {
+    store.dispatch('paie/importFiches', imported)
+    toast.success(`${imported.length} fiche(s) importée(s) avec succès`)
   }
-
-  // --- Signatures encadrées ---
-  const signY = finalY + 40;
-  doc.setDrawColor(100);
-  doc.rect(30, signY, 60, 25);
-  doc.rect(120, signY, 60, 25);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.text("Signature RH", 60, signY + 20, { align: "center" });
-  doc.text("Signature Employé", 150, signY + 20, { align: "center" });
-
-  // --- Pied de page ---
-  const pageHeight = doc.internal.pageSize.height;
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "italic");
-  doc.text(
-    "Document généré électroniquement – validité légale interne",
-    105,
-    pageHeight - 10,
-    { align: "center" }
-  );
-
-  doc.save(`Bulletin_${bulletin.employee}_${bulletin.month}_officiel.pdf`);
 }
 
-function sendBulletin() {
-  toast.info(`Bulletin envoyé à ${form.value.employee}`);
+function exportAsPDF() {
+  exportPaiesToPDF(filtered.value)
+  toast.info('Export PDF lancé')
 }
-
-function sendExisting(bulletin) {
-  toast.info(`Bulletin envoyé à ${bulletin.employee}`);
+function exportAsWord() {
+  exportPaiesToWord(filtered.value)
+  toast.info('Export Word lancé')
+}
+function exportAsExcel() {
+  exportPaiesToExcel(filtered.value)
+  toast.info('Export Excel lancé')
 }
 </script>
 
 <style scoped>
-button {
-  transition: all 0.2s ease;
+table td,
+table th {
+  vertical-align: middle;
 }
 </style>
